@@ -17,12 +17,20 @@ export default function Home() {
             of cash you have left.
           </p>
         </div>
-        <Link
-          href="/import"
-          className="flex h-12 items-center justify-center rounded-full bg-emerald-600 px-6 text-base font-medium text-white transition-colors hover:bg-emerald-700"
-        >
-          Import transactions →
-        </Link>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link
+            href="/import"
+            className="flex h-12 items-center justify-center rounded-full bg-emerald-600 px-6 text-base font-medium text-white transition-colors hover:bg-emerald-700"
+          >
+            Import transactions →
+          </Link>
+          <Link
+            href="/login"
+            className="text-base font-medium text-zinc-600 underline-offset-4 hover:underline dark:text-zinc-300"
+          >
+            Sign in
+          </Link>
+        </div>
       </main>
     </div>
   );

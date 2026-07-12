@@ -29,7 +29,18 @@ export async function updateSession(request: NextRequest) {
 
   // Do not run code between createServerClient and getUser() — it validates
   // and refreshes the token, and reads/writes the session cookies.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Protect app routes: unauthenticated users are sent to /login.
+  const protectedPaths = ["/dashboard"];
+  const path = request.nextUrl.pathname;
+  if (!user && protectedPaths.some((p) => path.startsWith(p))) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
 
   return supabaseResponse;
 }
