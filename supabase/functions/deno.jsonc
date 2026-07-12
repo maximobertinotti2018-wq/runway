@@ -1,0 +1,8 @@
+{
+  // Marks supabase/functions/** as a separate Deno project so editors and
+  // tsconfig.json (which excludes this directory) don't try to typecheck
+  // it as part of the Next.js app.
+  "compilerOptions": {
+    "lib": ["deno.window"]
+  }
+}

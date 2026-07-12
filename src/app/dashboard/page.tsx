@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signout } from "../login/actions";
+import { CategorizeButton } from "./CategorizeButton";
 
 export const metadata = { title: "Dashboard · Runway" };
 
@@ -37,6 +38,16 @@ export default async function DashboardPage() {
       >
         Import transactions →
       </Link>
+
+      <section className="space-y-2 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+        <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+          AI categorization
+        </h2>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Embeds any new merchants and matches them to a category by meaning.
+        </p>
+        <CategorizeButton />
+      </section>
     </main>
   );
 }

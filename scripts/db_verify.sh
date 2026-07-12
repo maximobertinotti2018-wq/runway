@@ -45,4 +45,7 @@ echo ">> pgvector smoke (384-dim cosine distance)"
 echo ">> RLS cross-tenant test"
 "${DB[@]}" -f "$REPO/supabase/tests/rls_cross_tenant_test.sql"
 
+echo ">> nearest_category test"
+"${DB[@]}" -f "$REPO/supabase/tests/nearest_category_test.sql"
+
 echo ">> DONE"
