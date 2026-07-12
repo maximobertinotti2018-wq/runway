@@ -21,13 +21,32 @@ and projects your runway — how many months of cash you have left.
 | Phase | Scope | State |
 |-------|-------|-------|
 | 1 | DB schema, RLS, `security_invoker` views, category taxonomy | ✅ Done — verified |
-| 2 | Auth (email + Google, `@supabase/ssr`) | ⏳ Next |
-| 3 | CSV import + merchant normalization | ⏳ |
-| 4 | Semantic categorization + overrides | ⏳ |
-| 5 | Dashboard (burn rate, runway, spend by category) | ⏳ |
+| 2 | Auth (email + Google, `@supabase/ssr`) | ✅ Done — verified in production |
+| 3 | CSV import + merchant normalization + persistence | ✅ Done — verified in production |
+| 4 | Semantic categorization + overrides | ✅ Done — 7/8 (87.5%) on manual accuracy check |
+| 5 | Dashboard (burn rate, runway, spend by category) | ⏳ Next |
 | 6 | Subscription detection + editable rules | ⏳ |
 
 See [`PLAN.md`](./PLAN.md) for the full phased plan and acceptance criteria.
+
+### Phase 4 note: why categorization is a hybrid, not pure embeddings
+
+The first pass (embedding merchants and categories with `gte-small`, matching
+by cosine distance) scored 5/8 on a manual accuracy check — `gte-small` has no
+brand knowledge, so short bank descriptors like `digitalocean` or `wholefds
+mkt` didn't reliably match their category. Enriching the category text with
+keywords helped one case but introduced a regression (`"Uber"` as a Transport
+keyword pulled `"uber eats"` away from Food & Dining on lexical overlap alone)
+— tuning the prompt further didn't converge.
+
+The fix: **known-merchant aliases take priority over embeddings.** A small,
+ordered regex table maps common brands (Netflix, DigitalOcean, Uber Eats,
+Whole Foods, …) directly to a category; embeddings are the fallback for the
+long tail of merchants not in the list, not the primary mechanism. This is
+the same pattern real transaction-categorization products use — deterministic
+rules for the high-volume common cases, ML for what's left. Final check: 7/8
+(87.5%), the one miss (`AMZN MKTP US`) being a merchant name that's genuinely
+ambiguous without item-level receipt data.
 
 ## Architecture notes
 

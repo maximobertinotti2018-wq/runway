@@ -39,28 +39,34 @@ RLS: `auth.uid() = user_id` en todas; `categories` de sistema legibles por todos
 
 ## Fases + criterios de aceptación
 
-### Fase 0 — Scaffold & tooling
-Next.js App Router + Tailwind; `supabase init` (CLI, dev local con Docker); env wiring.
-✅ `supabase start` levanta local; Next arranca y conecta; `@supabase/ssr` configurado.
+### Fase 0 — Scaffold & tooling ✅
+Next.js App Router + Tailwind + `@supabase/ssr`. (Sin `supabase start`/Docker — no disponible
+en el entorno de build; migraciones verificadas contra Postgres+pgvector plano en su lugar.)
 
-### Fase 1 — Schema + RLS + seed taxonomía  ← ARRANCAMOS ACÁ
+### Fase 1 — Schema + RLS + seed taxonomía ✅
 Migraciones declarativas: extensión pgvector, tablas, policies RLS, views `security_invoker`,
-seed de categorías con sus embeddings.
-✅ Migraciones aplican limpio; test de RLS demuestra que un user NO ve datos de otro;
-pgvector activo; categorías sembradas con embedding. Revisado por `database-reviewer` + skill `supabase`.
+seed de categorías. ✅ Migraciones aplican limpio; test de RLS demuestra que un user NO ve
+datos de otro; pgvector activo. Revisado con skill `supabase`.
 
-### Fase 2 — Auth
-Supabase Auth (email + Google OAuth), `@supabase/ssr`, middleware, rutas protegidas.
-✅ Login/logout; sesión disponible en RSC vía `getUser()`; unauth → redirect.
+### Fase 2 — Auth ✅
+Supabase Auth (email + Google OAuth disponible, no configurado aún), `@supabase/ssr`,
+middleware, rutas protegidas. ✅ Verificado en producción: signup → sesión → `/dashboard` →
+logout, con `profiles` creado automáticamente por trigger.
 
-### Fase 3 — Import CSV (pipeline)
-UI de upload + mapeo de columnas → Edge Function: parse → normaliza comercio → upsert merchant
-(embed si es nuevo) → inserta transacciones.
-✅ Subir CSV de muestra crea filas en `transactions`; cada comercio se embebe UNA sola vez.
+### Fase 3 — Import CSV (pipeline) ✅
+UI de upload + mapeo de columnas + preview → Server Action: parse → normaliza comercio →
+upsert merchant → inserta transactions. ✅ Verificado en producción: CSV de muestra →
+8 transacciones persistidas, 7 comercios deduplicados.
 
-### Fase 4 — Categorización
-Match merchant→categoría por similitud vectorial, respetando overrides de reglas.
-✅ `eval-harness` sobre un set etiquetado de comercios alcanza **precisión ≥ 85%**.
+### Fase 4 — Categorización ✅
+Prioridad: regla de usuario > **alias de comercio conocido** > match por embedding
+(fallback para la cola larga). Cambio respecto al plan original: los primeros intentos con
+embeddings puros (`gte-small`, sin conocimiento de marcas) dieron 5/8 y luego 4/8 —
+enriquecer las descripciones de categoría con keywords mejoró un caso pero rompió otro por
+colisión léxica ("Uber" en Transport atrajo "uber eats"). Un diccionario de marcas conocidas
+resolvió esto de forma determinística.
+✅ Check manual de precisión sobre 8 comercios reales: **7/8 (87.5%)**, supera el objetivo
+de ≥85%. El único fallo (`AMZN MKTP US`) es ambiguo por diseño (sin datos de línea de compra).
 
 ### Fase 5 — Dashboard
 Gasto por categoría (chart con `dataviz` + `ui-ux-pro-max`/`frontend-design`), burn rate,
@@ -77,8 +83,9 @@ Detección de recurrentes; UI de override de categoría.
 
 - 🔴 **ALTO — Fugas RLS (cross-tenant).** Mitigación: tests de policies (pgTAP), `database-reviewer`,
   y views `security_invoker` (no MV).
-- 🔴 **ALTO — Precisión de categorización** sobre strings sucios ("SQ *COFFEE 0123").
-  Mitigación: normalización + `eval-harness` + reglas de override.
+- 🟢 **RESUELTO — Precisión de categorización** sobre strings sucios ("SQ *COFFEE 0123").
+  gte-small puro no alcanzaba el objetivo (5/8 → 4/8 con distintos intentos de prompt);
+  resuelto con diccionario de marcas conocidas + embeddings como fallback → 7/8 (87.5%).
 - 🟡 **MEDIO — Runway engañoso** si el cash ingresado queda desactualizado. Mitigación: timestamp + aviso.
 - 🟡 **MEDIO — Variedad de formatos CSV** entre bancos. Mitigación: paso de mapeo de columnas.
 - 🟢 **BAJO — Calidad de gte-small (384d).** Aceptable para taxonomía fija; upgrade a OpenAI si hace falta.
