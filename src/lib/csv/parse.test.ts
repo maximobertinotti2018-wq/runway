@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseAmount } from "./amount";
 import { parseDate } from "./date";
-import { parseCsv, detectColumns } from "./parse";
+import { parseCsv, detectColumns, parseHeaders } from "./parse";
 
 describe("parseAmount", () => {
   it("parses common money formats", () => {
@@ -30,6 +30,16 @@ describe("parseDate", () => {
     expect(parseDate("13/40/2024")).toBeNull();
     expect(parseDate("hello")).toBeNull();
     expect(parseDate("")).toBeNull();
+  });
+});
+
+describe("parseHeaders", () => {
+  it("returns the header row", () => {
+    expect(parseHeaders("Date,Description,Amount\n2024-01-02,X,1.00")).toEqual([
+      "Date",
+      "Description",
+      "Amount",
+    ]);
   });
 });
 

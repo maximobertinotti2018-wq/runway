@@ -25,6 +25,16 @@ const DATE_HEADERS = ["date", "posted date", "post date", "posted", "trans date"
 const DESC_HEADERS = ["description", "merchant", "name", "memo", "details", "payee", "narrative"];
 const AMOUNT_HEADERS = ["amount", "debit", "value", "withdrawal", "charge"];
 
+/** Read just the header row of a CSV (used to drive manual column mapping). */
+export function parseHeaders(text: string): string[] {
+  const parsed = Papa.parse<Record<string, string>>(text, {
+    header: true,
+    skipEmptyLines: true,
+    preview: 1,
+  });
+  return parsed.meta.fields ?? [];
+}
+
 /** Best-effort detection of the three columns we need from the header row. */
 export function detectColumns(headers: string[]): ColumnMapping | null {
   const lower = headers.map((h) => h.trim().toLowerCase());
