@@ -28,14 +28,28 @@ async function embed(text: string): Promise<number[]> {
   return Array.from(output as Iterable<number>);
 }
 
+// The browser sends a CORS preflight (OPTIONS) before the real POST when
+// calling a cross-origin Edge Function. Without these headers the browser
+// blocks the request before it ever reaches our logic — surfacing to
+// supabase-js as an opaque "Failed to send a request to the Edge Function",
+// not as any error this function's code could catch or report.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...corsHeaders },
   });
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "Missing Authorization header" }, 401);
