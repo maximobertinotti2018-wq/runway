@@ -28,6 +28,48 @@ async function embed(text: string): Promise<number[]> {
   return Array.from(output as Iterable<number>);
 }
 
+// gte-small has no brand knowledge — "digitalocean" alone doesn't embed near
+// "Dev Tools & Hosting" for it. Embedding a keyword/brand-dense description
+// per category (instead of the bare display name) gives the model far more
+// lexical/semantic surface to match short, messy bank descriptors against.
+// Falls back to the bare name for any category not listed here, so adding a
+// new category later degrades gracefully instead of throwing.
+const CATEGORY_EMBED_TEXT: Record<string, string> = {
+  food_dining:
+    "Food and dining: restaurants, cafes, coffee shops, coffee roasters, bakeries, diners, bars, fast food, takeout, food delivery, Uber Eats, DoorDash, Starbucks",
+  groceries:
+    "Groceries and supermarkets: grocery store, supermarket, market, Whole Foods, Trader Joe's, Kroger, Safeway, Costco, fresh produce, household food shopping",
+  saas_software:
+    "SaaS and software subscriptions: software licenses, cloud apps, productivity tools, Notion, Slack, Zoom, Microsoft 365, Adobe, subscription software",
+  dev_tools_hosting:
+    "Developer tools and hosting: cloud servers, web hosting, DigitalOcean, AWS, Amazon Web Services, Google Cloud, Vercel, Netlify, Heroku, domain registration, GitHub, developer infrastructure",
+  ai_tools:
+    "AI tools: artificial intelligence subscriptions, OpenAI, ChatGPT, Anthropic, Claude, Midjourney, AI APIs, machine learning platforms",
+  transport: "Transportation: rideshare, Uber, Lyft, taxi, public transit, subway, bus, parking, tolls, gas station, fuel",
+  travel: "Travel: flights, airlines, hotels, Airbnb, car rental, vacation booking, train tickets",
+  utilities: "Utilities: electricity, water, gas bill, internet service provider, phone bill, cable, home utilities",
+  rent_office: "Rent and office: monthly rent, office lease, coworking space, WeWork, mortgage payment",
+  marketing_ads:
+    "Marketing and advertising: Google Ads, Facebook Ads, Meta Ads, social media advertising, marketing campaigns, sponsorships",
+  payroll_contractors:
+    "Payroll and contractors: employee salaries, freelancer payments, contractor invoices, payroll service",
+  fees_banking: "Fees and banking: bank fees, wire transfer fees, ATM fees, overdraft charges, credit card fees",
+  taxes: "Taxes: income tax payment, sales tax, tax filing service, IRS payment",
+  health: "Health: pharmacy, doctor visit, health insurance, gym membership, medical bills, dental",
+  entertainment:
+    "Entertainment: streaming services, Netflix, Spotify, Disney Plus, Hulu, movies, gaming, concerts, music subscriptions",
+  education: "Education: online courses, Udemy, Coursera, books, tuition, training",
+  hardware: "Hardware and electronics: computers, laptops, monitors, phones, electronics purchase, Apple Store, Best Buy",
+  professional_services: "Professional services: legal fees, accounting, consulting, lawyer, accountant",
+  uncategorized: "Uncategorized miscellaneous expense",
+};
+
+// A match with cosine distance above this is too weak to trust — better to
+// leave a transaction unassigned than confidently mislabel an ambiguous
+// merchant (e.g. a generic "AMZN MKTP US" purchase). Starting point, not a
+// scientifically tuned value; revisit once there's a larger labeled eval set.
+const MAX_CONFIDENT_DISTANCE = 0.9;
+
 // The browser sends a CORS preflight (OPTIONS) before the real POST when
 // calling a cross-origin Edge Function. Without these headers the browser
 // blocks the request before it ever reaches our logic — surfacing to
@@ -69,12 +111,12 @@ Deno.serve(async (req: Request) => {
     //    shared across all users, idempotent — runs at most once per category).
     const { data: bareCategories, error: catErr } = await adminClient
       .from("categories")
-      .select("id, name")
+      .select("id, slug, name")
       .is("embedding", null);
     if (catErr) return json({ error: `categories: ${catErr.message}` }, 500);
 
     for (const cat of bareCategories ?? []) {
-      const embedding = await embed(cat.name);
+      const embedding = await embed(CATEGORY_EMBED_TEXT[cat.slug] ?? cat.name);
       await adminClient.from("categories").update({ embedding }).eq("id", cat.id);
     }
 
@@ -121,16 +163,17 @@ Deno.serve(async (req: Request) => {
       }
       if (!m.embedding) continue;
 
-      const { data: matchedCategoryId, error: matchErr } = await userClient.rpc(
-        "nearest_category",
+      const { data: matches, error: matchErr } = await userClient.rpc(
+        "nearest_category_match",
         { query_embedding: m.embedding },
       );
-      if (matchErr) return json({ error: `nearest_category: ${matchErr.message}` }, 500);
-      if (!matchedCategoryId) continue;
+      if (matchErr) return json({ error: `nearest_category_match: ${matchErr.message}` }, 500);
+      const match = matches?.[0];
+      if (!match || match.distance > MAX_CONFIDENT_DISTANCE) continue;
 
       const { count, error } = await userClient
         .from("transactions")
-        .update({ category_id: matchedCategoryId }, { count: "exact" })
+        .update({ category_id: match.category_id }, { count: "exact" })
         .eq("merchant_id", m.id)
         .is("category_id", null);
       if (error) return json({ error: `apply match: ${error.message}` }, 500);

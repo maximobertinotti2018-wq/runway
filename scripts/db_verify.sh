@@ -48,4 +48,7 @@ echo ">> RLS cross-tenant test"
 echo ">> nearest_category test"
 "${DB[@]}" -f "$REPO/supabase/tests/nearest_category_test.sql"
 
+echo ">> nearest_category_match test"
+"${DB[@]}" -f "$REPO/supabase/tests/nearest_category_match_test.sql"
+
 echo ">> DONE"
