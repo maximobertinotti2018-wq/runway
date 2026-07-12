@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   parseCsv,
   detectColumns,
@@ -9,8 +10,10 @@ import {
   type RawTransaction,
 } from "@/lib/csv/parse";
 import { normalizeMerchant } from "@/lib/merchants/normalize";
+import { saveImport, type SaveImportResult } from "./actions";
 
 type Stage = "idle" | "mapping" | "preview";
+type SaveState = { status: "idle" } | { status: "saving" } | { status: "done"; result: SaveImportResult };
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -22,6 +25,7 @@ export function ImportClient() {
   const [rows, setRows] = useState<RawTransaction[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [stage, setStage] = useState<Stage>("idle");
+  const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
 
   const runParse = useCallback((text: string, map: ColumnMapping) => {
     const res = parseCsv(text, map);
@@ -69,7 +73,14 @@ export function ImportClient() {
     setMapping(null);
     setRows([]);
     setErrors([]);
+    setSaveState({ status: "idle" });
   };
+
+  const onSave = useCallback(async () => {
+    setSaveState({ status: "saving" });
+    const result = await saveImport(fileName ?? "import.csv", rows);
+    setSaveState({ status: "done", result });
+  }, [fileName, rows]);
 
   const total = useMemo(() => rows.reduce((s, r) => s + Math.abs(r.amount), 0), [rows]);
 
@@ -96,13 +107,50 @@ export function ImportClient() {
                 {rows.length} transactions · {money.format(total)} total spend
               </p>
             </div>
-            <button
-              onClick={reset}
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
-            >
-              Import another file
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={reset}
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
+              >
+                Import another file
+              </button>
+              {saveState.status !== "done" || !saveState.result.success ? (
+                <button
+                  onClick={onSave}
+                  disabled={saveState.status === "saving"}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {saveState.status === "saving" ? "Saving…" : "Save to Runway"}
+                </button>
+              ) : null}
+            </div>
           </div>
+
+          {saveState.status === "done" && saveState.result.success && (
+            <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-200">
+              Saved {saveState.result.insertedCount} transactions across{" "}
+              {saveState.result.merchantCount} merchants.{" "}
+              <Link href="/dashboard" className="font-medium underline underline-offset-2">
+                Go to dashboard →
+              </Link>
+            </div>
+          )}
+          {saveState.status === "done" && !saveState.result.success && (
+            <div
+              role="alert"
+              className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800/50 dark:bg-red-950/40 dark:text-red-200"
+            >
+              {saveState.result.error}
+              {saveState.result.error === "Sign in to save your import" && (
+                <>
+                  {" "}
+                  <Link href="/login" className="font-medium underline underline-offset-2">
+                    Sign in →
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
 
           {errors.length > 0 && (
             <div
