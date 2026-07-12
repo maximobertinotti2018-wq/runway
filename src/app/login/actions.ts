@@ -23,12 +23,18 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = await createClient();
   const origin = (await headers()).get("origin") ?? "";
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: getString(formData, "email"),
     password: getString(formData, "password"),
     options: { emailRedirectTo: `${origin}/auth/confirm` },
   });
   if (error) redirect(`/login?error=${encodeURIComponent(error.message)}`);
+  // Email confirmation disabled → signUp returns a session; sign straight in.
+  if (data.session) {
+    revalidatePath("/", "layout");
+    redirect("/dashboard");
+  }
+  // Confirmation enabled → wait for the email link.
   redirect("/login?message=Check your email to confirm your account.");
 }
 
