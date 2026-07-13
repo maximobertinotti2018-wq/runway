@@ -146,3 +146,26 @@ export async function deleteOwnAccount(): Promise<DeleteAccountResult> {
   await supabase.auth.signOut();
   redirect("/");
 }
+
+export type ChangeEmailResult = { success: true } | { success: false; error: string };
+
+/**
+ * supabase.auth.updateUser({email}) doesn't change the email immediately —
+ * it sends a confirmation link (to the new address, or both old and new,
+ * depending on the project's "secure email change" setting) and the change
+ * only applies once that's clicked. Reuses the existing /auth/confirm route
+ * (already generic over EmailOtpType, no changes needed there) rather than
+ * building a second confirmation code path.
+ */
+export async function changeEmail(newEmail: string): Promise<ChangeEmailResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "sign-in-required" };
+  if (!newEmail || newEmail === user.email) return { success: false, error: "invalid-email" };
+
+  const { error } = await supabase.auth.updateUser({ email: newEmail });
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}

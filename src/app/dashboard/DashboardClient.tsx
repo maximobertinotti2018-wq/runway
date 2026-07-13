@@ -9,6 +9,7 @@ import { CategorizeButton } from "./CategorizeButton";
 import { SubscriptionsSection } from "./SubscriptionsSection";
 import { AddTransactionForm } from "./AddTransactionForm";
 import { DeleteAccountSection } from "./DeleteAccountSection";
+import { ChangeEmailForm } from "./ChangeEmailForm";
 import { aggregateSpend, type MonthlyRow } from "@/lib/dashboard/aggregate";
 import { foldTopCategories } from "@/lib/dashboard/spend";
 import { computeRunway, type RunwayStatus } from "@/lib/dashboard/runway";
@@ -198,6 +199,8 @@ export function DashboardClient({
         </p>
         <CategorizeButton />
       </section>
+
+      <ChangeEmailForm currentEmail={email} />
 
       <DeleteAccountSection />
     </main>
