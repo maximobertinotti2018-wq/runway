@@ -6,9 +6,11 @@ import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { signout } from "../login/actions";
 import { updateCashAvailable } from "./actions";
 import { CategorizeButton } from "./CategorizeButton";
+import { SubscriptionsSection } from "./SubscriptionsSection";
 import { aggregateSpend, type MonthlyRow } from "@/lib/dashboard/aggregate";
 import { foldTopCategories } from "@/lib/dashboard/spend";
 import { computeRunway, type RunwayStatus } from "@/lib/dashboard/runway";
+import { detectSubscriptions, type TransactionForDetection } from "@/lib/subscriptions/detect";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -25,14 +27,29 @@ const STATUS_HEX: Record<RunwayStatus, string> = {
   critical: "#d03b3b",
 };
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 interface Props {
   email: string;
   cashAvailable: number;
   currency: string;
   spendRows: MonthlyRow[];
+  transactions: TransactionForDetection[];
+  categories: Category[];
+  categoryByMerchant: Record<string, string | null>;
 }
 
-export function DashboardClient({ email, cashAvailable, spendRows }: Props) {
+export function DashboardClient({
+  email,
+  cashAvailable,
+  spendRows,
+  transactions,
+  categories,
+  categoryByMerchant,
+}: Props) {
   const { t } = useLanguage();
 
   const summary = useMemo(
@@ -44,6 +61,7 @@ export function DashboardClient({ email, cashAvailable, spendRows }: Props) {
     [summary.byCategory, t],
   );
   const maxTotal = chartRows[0]?.total ?? 0;
+  const subscriptions = useMemo(() => detectSubscriptions(transactions), [transactions]);
 
   const [cash, setCash] = useState(cashAvailable);
   const runway = useMemo(() => computeRunway(cash, summary.burnRate), [cash, summary.burnRate]);
@@ -118,6 +136,12 @@ export function DashboardClient({ email, cashAvailable, spendRows }: Props) {
           </div>
         )}
       </section>
+
+      <SubscriptionsSection
+        subscriptions={subscriptions}
+        categories={categories}
+        categoryByMerchant={categoryByMerchant}
+      />
 
       <Link
         href="/import"
