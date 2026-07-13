@@ -115,7 +115,7 @@ Four layers, each covering what the others can't:
 
 | Layer | Command | Covers |
 |-------|---------|--------|
-| Unit tests (Vitest) | `npm test` | Pure logic: CSV parsing, merchant normalization, runway/burn-rate math, subscription detection, i18n interpolation, **the categorization alias eval** |
+| Unit tests (Vitest) | `npm test` | Pure logic: CSV parsing, merchant normalization, runway/burn-rate math, subscription detection, i18n interpolation, **the categorization alias eval**; plus a component-level a11y scan of `/dashboard` (jsdom + jest-axe — the one route the E2E suite can't reach) |
 | E2E (Playwright) | `npm run test:e2e` | Landing, theme/language persistence, CSV import → preview, login/forgot-password shells — everything reachable without a live Supabase session |
 | Accessibility (axe-core) | part of `test:e2e`, `e2e/a11y.spec.ts` | WCAG 2.0/2.1 A+AA scan of every E2E page, light **and** dark mode (10 checks) |
 | Local DB verification | `bash scripts/db_verify.sh` | Migrations, RLS cross-tenant isolation, `nearest_category`/`nearest_category_match` SQL functions, dedupe constraint, `delete_own_account` cascade — against a throwaway Postgres 16 + `pgvector` cluster, no Docker |
@@ -159,8 +159,17 @@ against the WCAG AA minimum of 4.5:1, and the small `text-zinc-400` caption
 text measured 2.62:1 — darkened to emerald-700/zinc-500 respectively. It also
 caught a `<select>` on the dashboard (the per-subscription category override)
 with no accessible name for screen readers, fixed with an `aria-label`.
-`/dashboard` itself needs a live session so it isn't in the automated suite —
-checked by hand with the same tool instead, 0 violations after the fix above.
+
+`/dashboard` needs a live Supabase session, so it isn't reachable from the
+Playwright suite — instead, `DashboardClient.a11y.test.tsx` renders it with
+mock props via Testing Library + jsdom (a `// @vitest-environment jsdom`
+override, since every other test runs under the faster `node` environment)
+and runs `jest-axe` against the result, as part of the normal `npm test` run.
+The tradeoff: jsdom has no real layout/font engine, so it can't run the
+color-contrast rule — that part stays a manual, `e2e`-tool-assisted check
+against a real browser (the one that already caught the fix above). Structural
+issues — missing accessible names, ARIA misuse, heading order — the class of
+bug the `<select>` fix above was, are fully covered in CI either way.
 
 Expected `db_verify.sh` tail:
 
