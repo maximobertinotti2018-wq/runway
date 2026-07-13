@@ -143,10 +143,16 @@ export function ImportClient() {
 
           {saveState.status === "done" && saveState.result.success && (
             <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-200">
-              {t("import.savedMessage", {
-                count: saveState.result.insertedCount,
-                merchants: saveState.result.merchantCount,
-              })}{" "}
+              {t(
+                saveState.result.duplicateCount > 0
+                  ? "import.savedMessageWithDuplicates"
+                  : "import.savedMessage",
+                {
+                  count: saveState.result.insertedCount,
+                  merchants: saveState.result.merchantCount,
+                  duplicates: saveState.result.duplicateCount,
+                },
+              )}{" "}
               <Link href="/dashboard" className="font-medium underline underline-offset-2">
                 {t("import.goToDashboard")}
               </Link>

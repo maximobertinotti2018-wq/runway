@@ -51,4 +51,7 @@ echo ">> nearest_category test"
 echo ">> nearest_category_match test"
 "${DB[@]}" -f "$REPO/supabase/tests/nearest_category_match_test.sql"
 
+echo ">> dedupe transactions test"
+"${DB[@]}" -f "$REPO/supabase/tests/dedupe_transactions_test.sql"
+
 echo ">> DONE"

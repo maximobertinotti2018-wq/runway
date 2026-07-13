@@ -5,7 +5,7 @@ import { prepareMerchants, prepareTransactions } from "@/lib/import/prepare";
 import type { RawTransaction } from "@/lib/csv/parse";
 
 export type SaveImportResult =
-  | { success: true; insertedCount: number; merchantCount: number }
+  | { success: true; insertedCount: number; merchantCount: number; duplicateCount: number }
   | { success: false; error: string };
 
 /**
@@ -53,12 +53,28 @@ export async function saveImport(fileName: string, rows: RawTransaction[]): Prom
   );
   const txPayload = prepareTransactions(rows, user.id, importRow.id, merchantIdByNormalized);
 
-  const { error: txError } = await supabase.from("transactions").insert(txPayload);
+  // ignoreDuplicates -> ON CONFLICT DO NOTHING against the unique(user_id,
+  // occurred_on, raw_description, amount) constraint: re-importing an
+  // overlapping date range silently skips rows already saved, instead of
+  // duplicating every transaction on every re-import.
+  const { data: insertedRows, error: txError } = await supabase
+    .from("transactions")
+    .upsert(txPayload, {
+      onConflict: "user_id,occurred_on,raw_description,amount",
+      ignoreDuplicates: true,
+    })
+    .select("id");
   if (txError) {
     await supabase.from("imports").update({ status: "error" }).eq("id", importRow.id);
     return { success: false, error: txError.message };
   }
 
+  const insertedCount = insertedRows?.length ?? 0;
   await supabase.from("imports").update({ status: "done" }).eq("id", importRow.id);
-  return { success: true, insertedCount: txPayload.length, merchantCount: merchantRows?.length ?? 0 };
+  return {
+    success: true,
+    insertedCount,
+    merchantCount: merchantRows?.length ?? 0,
+    duplicateCount: txPayload.length - insertedCount,
+  };
 }

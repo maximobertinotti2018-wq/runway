@@ -314,3 +314,28 @@ $$;
 revoke all on function public.nearest_category_match(vector) from public;
 grant execute on function public.nearest_category_match(vector) to authenticated, service_role;
 
+-- ============================================================
+-- supabase/migrations/20260713000001_ci_smoke_test.sql
+-- ============================================================
+-- Runway — CI pipeline verification. No-op (comment only): this migration
+-- confirmed the GitHub Actions "Deploy Supabase" workflow applies new
+-- migrations automatically on push, after the one-time baseline repair.
+-- Kept in history rather than deleted, per migration-file convention: once
+-- applied to a real environment, a migration file stays (even a harmless
+-- one) so the recorded history matches what actually happened.
+select 1;
+
+-- ============================================================
+-- supabase/migrations/20260713000002_dedupe_transactions.sql
+-- ============================================================
+-- Runway — prevent duplicate transactions from re-importing overlapping CSVs.
+-- Natural key: same user, same date, same raw description, same amount.
+-- A small, documented tradeoff: two genuinely separate purchases on the same
+-- day with an identical amount and identical raw descriptor would collide —
+-- acceptable for an MVP given how much worse the prior behavior was (an
+-- unbounded duplicate every re-import).
+
+alter table public.transactions
+  add constraint transactions_user_date_desc_amount_key
+  unique (user_id, occurred_on, raw_description, amount);
+
