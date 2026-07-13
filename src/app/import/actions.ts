@@ -78,3 +78,28 @@ export async function saveImport(fileName: string, rows: RawTransaction[]): Prom
     duplicateCount: txPayload.length - insertedCount,
   };
 }
+
+export type DeleteImportResult = { success: true } | { success: false; error: string };
+
+/**
+ * Deletes an import and its transactions. transactions.import_id is
+ * ON DELETE SET NULL (a safety default for other paths), so deleting the
+ * import row alone would silently orphan its transactions instead of
+ * removing them — explicit delete first, same RLS-scoped client as everywhere
+ * else, so this can never touch another user's rows.
+ */
+export async function deleteImport(importId: string): Promise<DeleteImportResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "sign-in-required" };
+
+  const { error: txError } = await supabase.from("transactions").delete().eq("import_id", importId);
+  if (txError) return { success: false, error: txError.message };
+
+  const { error: importError } = await supabase.from("imports").delete().eq("id", importId);
+  if (importError) return { success: false, error: importError.message };
+
+  return { success: true };
+}

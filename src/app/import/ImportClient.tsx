@@ -12,13 +12,14 @@ import {
 import { normalizeMerchant } from "@/lib/merchants/normalize";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { saveImport, type SaveImportResult } from "./actions";
+import { RecentImports, type RecentImportRow } from "./RecentImports";
 
 type Stage = "idle" | "mapping" | "preview";
 type SaveState = { status: "idle" } | { status: "saving" } | { status: "done"; result: SaveImportResult };
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
-export function ImportClient() {
+export function ImportClient({ recentImports }: { recentImports: RecentImportRow[] }) {
   const { t } = useLanguage();
   const [fileName, setFileName] = useState<string | null>(null);
   const [rawText, setRawText] = useState("");
@@ -218,6 +219,8 @@ export function ImportClient() {
           <p className="text-xs text-zinc-400 dark:text-zinc-500">{t("import.merchantColumnNote")}</p>
         </section>
       )}
+
+      {recentImports.length > 0 && <RecentImports imports={recentImports} />}
     </main>
   );
 }

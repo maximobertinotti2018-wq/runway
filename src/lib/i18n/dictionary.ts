@@ -79,6 +79,11 @@ export const dictionary = {
       colHeaderDescription: "Description",
       colHeaderMerchant: "Merchant",
       colHeaderAmount: "Amount",
+      recentImportsTitle: "Recent imports",
+      recentImportsMeta: "{count} transactions · {date}",
+      delete: "Delete",
+      deleting: "Deleting…",
+      deleteConfirm: "Delete this import and its transactions? This can't be undone.",
     },
     dashboard: {
       title: "Dashboard",
@@ -202,6 +207,11 @@ export const dictionary = {
       colHeaderDescription: "Descripción",
       colHeaderMerchant: "Comercio",
       colHeaderAmount: "Monto",
+      recentImportsTitle: "Importaciones recientes",
+      recentImportsMeta: "{count} transacciones · {date}",
+      delete: "Eliminar",
+      deleting: "Eliminando…",
+      deleteConfirm: "¿Eliminar esta importación y sus transacciones? No se puede deshacer.",
     },
     dashboard: {
       title: "Panel",
