@@ -14,8 +14,6 @@ import { foldTopCategories } from "@/lib/dashboard/spend";
 import { computeRunway, type RunwayStatus } from "@/lib/dashboard/runway";
 import { detectSubscriptions, type TransactionForDetection } from "@/lib/subscriptions/detect";
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-
 // Validated in the dataviz skill: passes contrast on both light (#fcfcfb)
 // and dark (#1a1a19) chart surfaces. Spend-by-category is a magnitude
 // comparison (one series, bar length carries the value) — a single hue is
@@ -49,12 +47,17 @@ export function DashboardClient({
   email,
   hasTransactions,
   cashAvailable,
+  currency,
   spendRows,
   transactions,
   categories,
   categoryByMerchant,
 }: Props) {
   const { t } = useLanguage();
+  const money = useMemo(
+    () => new Intl.NumberFormat("en-US", { style: "currency", currency }),
+    [currency],
+  );
 
   const summary = useMemo(
     () => aggregateSpend(spendRows, t("dashboard.uncategorized")),
@@ -164,6 +167,7 @@ export function DashboardClient({
         subscriptions={subscriptions}
         categories={categories}
         categoryByMerchant={categoryByMerchant}
+        currency={currency}
       />
 
       <div className="flex flex-wrap items-center gap-3">

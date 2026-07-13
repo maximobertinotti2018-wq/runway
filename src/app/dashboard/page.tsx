@@ -4,6 +4,16 @@ import { DashboardClient } from "./DashboardClient";
 
 export const metadata = { title: "Dashboard · Runway" };
 
+// The raw-transaction query below feeds subscription detection, which needs
+// individual rows (not the pre-aggregated monthly_spend_by_category view) to
+// find cadence patterns — but fetching a user's *entire* lifetime history on
+// every dashboard load doesn't scale. 24 months comfortably covers yearly
+// cadence detection (needs 2 occurrences to confirm a pattern) while keeping
+// the query bounded; the row limit is a backstop against pathological
+// density within that window.
+const SUBSCRIPTION_WINDOW_MONTHS = 24;
+const TRANSACTION_ROW_LIMIT = 2000;
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const {
@@ -12,6 +22,10 @@ export default async function DashboardPage() {
 
   // Belt-and-suspenders: middleware already guards this route.
   if (!user) redirect("/login");
+
+  const windowStart = new Date();
+  windowStart.setMonth(windowStart.getMonth() - SUBSCRIPTION_WINDOW_MONTHS);
+  const windowStartIso = windowStart.toISOString().slice(0, 10);
 
   const [{ data: profile }, { data: spendRows }, { data: txRows }, { data: categories }, { count: transactionCount }] =
     await Promise.all([
@@ -24,7 +38,9 @@ export default async function DashboardPage() {
         .from("transactions")
         .select("merchant_id, occurred_on, amount, category_id, merchants(normalized_name)")
         .not("merchant_id", "is", null)
-        .order("occurred_on", { ascending: true }),
+        .gte("occurred_on", windowStartIso)
+        .order("occurred_on", { ascending: true })
+        .limit(TRANSACTION_ROW_LIMIT),
       supabase.from("categories").select("id, name").order("name"),
       // Unfiltered count (unlike txRows above) so a CSV with only
       // empty-normalization rows still counts as "the user has imported

@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { setMerchantCategory } from "./actions";
 import type { DetectedSubscription, Cadence } from "@/lib/subscriptions/detect";
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const HIKE_COLOR = "#fab219"; // validated "warning" status hex — never color-alone, paired with a label
 
 interface Category {
@@ -17,10 +16,12 @@ export function SubscriptionsSection({
   subscriptions,
   categories,
   categoryByMerchant,
+  currency,
 }: {
   subscriptions: DetectedSubscription[];
   categories: Category[];
   categoryByMerchant: Record<string, string | null>;
+  currency: string;
 }) {
   const { t } = useLanguage();
   const cadenceLabel: Record<Cadence, string> = {
@@ -49,6 +50,7 @@ export function SubscriptionsSection({
               cadenceLabel={cadenceLabel[sub.cadence]}
               categories={categories}
               initialCategoryId={categoryByMerchant[sub.merchantId] ?? ""}
+              currency={currency}
             />
           ))}
         </ul>
@@ -62,15 +64,21 @@ function SubscriptionRow({
   cadenceLabel,
   categories,
   initialCategoryId,
+  currency,
 }: {
   sub: DetectedSubscription;
   cadenceLabel: string;
   categories: Category[];
   initialCategoryId: string;
+  currency: string;
 }) {
   const { t } = useLanguage();
   const [categoryId, setCategoryId] = useState(initialCategoryId);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const money = useMemo(
+    () => new Intl.NumberFormat("en-US", { style: "currency", currency }),
+    [currency],
+  );
 
   const onChange = async (next: string) => {
     setCategoryId(next);

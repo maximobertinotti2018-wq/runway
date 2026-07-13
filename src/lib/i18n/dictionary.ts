@@ -9,6 +9,10 @@ export const dictionary = {
       signOut: "Sign out",
       switchToLight: "Switch to light theme",
       switchToDark: "Switch to dark theme",
+      errorTitle: "Something went wrong",
+      errorDescription: "An unexpected error happened loading this page. Try again, or head back home.",
+      errorRetry: "Try again",
+      errorBackHome: "Back to home",
     },
     landing: {
       badge: "MVP · work in progress",
@@ -152,6 +156,10 @@ export const dictionary = {
       signOut: "Cerrar sesión",
       switchToLight: "Cambiar a tema claro",
       switchToDark: "Cambiar a tema oscuro",
+      errorTitle: "Algo salió mal",
+      errorDescription: "Hubo un error inesperado al cargar esta página. Probá de nuevo, o volvé al inicio.",
+      errorRetry: "Reintentar",
+      errorBackHome: "Volver al inicio",
     },
     landing: {
       badge: "MVP · en desarrollo",
