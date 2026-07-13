@@ -1,0 +1,63 @@
+name: Deploy Supabase
+
+# Runs on GitHub's own runners, which have normal outbound internet access —
+# unlike the sandbox this project is developed in, which has Supabase's
+# hosts blocked by network policy. This is how schema/function changes reach
+# the real project without any manual copy-paste into the dashboard.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/functions/**"
+  workflow_dispatch:
+    inputs:
+      baseline_only:
+        description: >
+          Mark already-existing migrations as applied WITHOUT running their
+          SQL again. Run this once, manually, before the first automatic
+          push — every migration up to this workflow's introduction was
+          already applied by hand via the SQL Editor.
+        type: boolean
+        default: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link project
+        run: supabase link --project-ref wocsxowwikcpnuiklsmi
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Baseline already-applied migrations (one-time, manual trigger only)
+        if: ${{ github.event.inputs.baseline_only == 'true' }}
+        run: |
+          for v in 20260712000001 20260712000002 20260712000003 20260712000004 20260712000005 20260712000006; do
+            supabase migration repair --status applied "$v"
+          done
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      - name: Push migrations
+        if: ${{ github.event.inputs.baseline_only != 'true' }}
+        run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      - name: Deploy Edge Functions
+        if: ${{ github.event.inputs.baseline_only != 'true' }}
+        run: |
+          supabase functions deploy categorize
+          supabase functions deploy seed-categories
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
