@@ -13,7 +13,7 @@ export default async function DashboardPage() {
   // Belt-and-suspenders: middleware already guards this route.
   if (!user) redirect("/login");
 
-  const [{ data: profile }, { data: spendRows }, { data: txRows }, { data: categories }] =
+  const [{ data: profile }, { data: spendRows }, { data: txRows }, { data: categories }, { count: transactionCount }] =
     await Promise.all([
       supabase.from("profiles").select("cash_available, currency").eq("id", user.id).single(),
       supabase
@@ -26,6 +26,10 @@ export default async function DashboardPage() {
         .not("merchant_id", "is", null)
         .order("occurred_on", { ascending: true }),
       supabase.from("categories").select("id, name").order("name"),
+      // Unfiltered count (unlike txRows above) so a CSV with only
+      // empty-normalization rows still counts as "the user has imported
+      // something" for the empty-state banner.
+      supabase.from("transactions").select("id", { count: "exact", head: true }),
     ]);
 
   const categoryByMerchant: Record<string, string | null> = {};
@@ -36,6 +40,7 @@ export default async function DashboardPage() {
   return (
     <DashboardClient
       email={user.email ?? ""}
+      hasTransactions={(transactionCount ?? 0) > 0}
       cashAvailable={profile ? Number(profile.cash_available) : 0}
       currency={profile?.currency ?? "USD"}
       spendRows={(spendRows ?? []).map((r) => ({

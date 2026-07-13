@@ -83,6 +83,9 @@ export const dictionary = {
     dashboard: {
       title: "Dashboard",
       signedInAs: "Signed in as {email}.",
+      emptyStateTitle: "Welcome to Runway — let's import your first transactions",
+      emptyStateDesc:
+        "Upload a CSV from your bank or card to see your burn rate, runway, and spend by category.",
       importTransactions: "Import transactions →",
       aiCategorizationTitle: "AI categorization",
       aiCategorizationDesc: "Embeds any new merchants and matches them to a category by meaning.",
@@ -202,6 +205,9 @@ export const dictionary = {
     dashboard: {
       title: "Panel",
       signedInAs: "Sesión iniciada como {email}.",
+      emptyStateTitle: "Bienvenido a Runway — importemos tus primeras transacciones",
+      emptyStateDesc:
+        "Subí un CSV de tu banco o tarjeta para ver tu burn rate, runway y gasto por categoría.",
       importTransactions: "Importar transacciones →",
       aiCategorizationTitle: "Categorización con IA",
       aiCategorizationDesc: "Embebe los comercios nuevos y los matchea a una categoría por significado.",

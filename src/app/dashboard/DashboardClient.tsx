@@ -34,6 +34,7 @@ interface Category {
 
 interface Props {
   email: string;
+  hasTransactions: boolean;
   cashAvailable: number;
   currency: string;
   spendRows: MonthlyRow[];
@@ -44,6 +45,7 @@ interface Props {
 
 export function DashboardClient({
   email,
+  hasTransactions,
   cashAvailable,
   spendRows,
   transactions,
@@ -80,6 +82,25 @@ export function DashboardClient({
       </header>
 
       <p className="text-zinc-600 dark:text-zinc-400">{t("dashboard.signedInAs", { email })}</p>
+
+      {!hasTransactions && (
+        <section className="flex flex-col items-start gap-3 rounded-xl border border-emerald-300 bg-emerald-50 p-5 dark:border-emerald-800/50 dark:bg-emerald-950/40">
+          <div>
+            <h2 className="text-base font-semibold text-emerald-900 dark:text-emerald-100">
+              {t("dashboard.emptyStateTitle")}
+            </h2>
+            <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-200">
+              {t("dashboard.emptyStateDesc")}
+            </p>
+          </div>
+          <Link
+            href="/import"
+            className="inline-flex h-10 items-center rounded-full bg-emerald-600 px-4 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+          >
+            {t("dashboard.importTransactions")}
+          </Link>
+        </section>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-3">
         <StatTile
