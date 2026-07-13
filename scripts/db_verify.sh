@@ -54,4 +54,7 @@ echo ">> nearest_category_match test"
 echo ">> dedupe transactions test"
 "${DB[@]}" -f "$REPO/supabase/tests/dedupe_transactions_test.sql"
 
+echo ">> delete_own_account test"
+"${DB[@]}" -f "$REPO/supabase/tests/delete_own_account_test.sql"
+
 echo ">> DONE"

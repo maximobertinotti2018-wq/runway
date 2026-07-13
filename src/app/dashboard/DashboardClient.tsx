@@ -7,6 +7,8 @@ import { signout } from "../login/actions";
 import { updateCashAvailable } from "./actions";
 import { CategorizeButton } from "./CategorizeButton";
 import { SubscriptionsSection } from "./SubscriptionsSection";
+import { AddTransactionForm } from "./AddTransactionForm";
+import { DeleteAccountSection } from "./DeleteAccountSection";
 import { aggregateSpend, type MonthlyRow } from "@/lib/dashboard/aggregate";
 import { foldTopCategories } from "@/lib/dashboard/spend";
 import { computeRunway, type RunwayStatus } from "@/lib/dashboard/runway";
@@ -164,12 +166,16 @@ export function DashboardClient({
         categoryByMerchant={categoryByMerchant}
       />
 
-      <Link
-        href="/import"
-        className="inline-flex h-11 w-fit items-center rounded-full bg-emerald-600 px-5 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
-      >
-        {t("dashboard.importTransactions")}
-      </Link>
+      <div className="flex flex-wrap items-center gap-3">
+        <Link
+          href="/import"
+          className="inline-flex h-11 w-fit items-center rounded-full bg-emerald-600 px-5 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+        >
+          {t("dashboard.importTransactions")}
+        </Link>
+      </div>
+
+      <AddTransactionForm categories={categories} />
 
       <section className="space-y-2 border-t border-zinc-200 pt-6 dark:border-zinc-800">
         <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
@@ -180,6 +186,8 @@ export function DashboardClient({
         </p>
         <CategorizeButton />
       </section>
+
+      <DeleteAccountSection />
     </main>
   );
 }
