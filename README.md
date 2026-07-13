@@ -100,6 +100,15 @@ check is now a 42-case automated eval, see [Testing](#testing).
   `security_invoker` view — never a materialized view, which would bypass RLS.
 - **Embeddings are cached per merchant**, not per transaction, to keep AI cost near zero.
 - **Fixed category taxonomy** (not emergent clusters) so results are predictable.
+- **Rate limiting is layered by who owns the risk.** `categorize` has its own
+  30s-per-user floor at the app layer (see the hardening pass above) because
+  it's a cost/abuse surface this app introduces — Supabase has no opinion on
+  it. Login, signup, and password-reset are deliberately *not* re-throttled
+  in application code: Supabase Auth (GoTrue) already rate-limits those
+  endpoints by default, and duplicating that logic app-side would mean
+  maintaining a second, weaker copy of a control the platform already owns.
+  Project-specific limits are configurable in the Supabase dashboard under
+  Auth → Rate Limits if the defaults ever need tuning.
 
 ## Deployment
 
