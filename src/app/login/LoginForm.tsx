@@ -76,7 +76,7 @@ export function LoginForm() {
         <div className="flex gap-3">
           <button
             formAction={login}
-            className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+            className="flex-1 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-800"
           >
             {t("login.logIn")}
           </button>
@@ -89,7 +89,7 @@ export function LoginForm() {
         </div>
       </form>
 
-      <div className="flex items-center gap-3 text-xs text-zinc-400">
+      <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
         <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
         {t("login.or")}
         <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />

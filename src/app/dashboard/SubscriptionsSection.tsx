@@ -100,6 +100,7 @@ function SubscriptionRow({
         <select
           value={categoryId}
           onChange={(e) => onChange(e.target.value)}
+          aria-label={t("dashboard.categorySelectLabel", { merchant: sub.merchantName })}
           className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
         >
           <option value="" disabled>
@@ -112,10 +113,10 @@ function SubscriptionRow({
           ))}
         </select>
         {status === "saving" && (
-          <span className="text-xs text-zinc-400">{t("dashboard.categorySaving")}</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">{t("dashboard.categorySaving")}</span>
         )}
         {status === "saved" && (
-          <span className="text-xs text-emerald-600 dark:text-emerald-400">
+          <span className="text-xs text-emerald-700 dark:text-emerald-400">
             {t("dashboard.categorySaved")}
           </span>
         )}

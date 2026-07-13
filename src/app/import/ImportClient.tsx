@@ -134,7 +134,7 @@ export function ImportClient({ recentImports }: { recentImports: RecentImportRow
                 <button
                   onClick={onSave}
                   disabled={saveState.status === "saving"}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {saveState.status === "saving" ? t("import.saving") : t("import.saveToRunway")}
                 </button>
@@ -216,7 +216,7 @@ export function ImportClient({ recentImports }: { recentImports: RecentImportRow
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">{t("import.merchantColumnNote")}</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("import.merchantColumnNote")}</p>
         </section>
       )}
 
@@ -330,7 +330,7 @@ function ColumnMapper({
       <div className="flex gap-3">
         <button
           onClick={onConfirm}
-          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+          className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-800"
         >
           {t("import.previewTransactions")}
         </button>

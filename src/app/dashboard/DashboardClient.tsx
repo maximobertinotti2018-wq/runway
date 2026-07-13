@@ -97,7 +97,7 @@ export function DashboardClient({
           </div>
           <Link
             href="/import"
-            className="inline-flex h-10 items-center rounded-full bg-emerald-600 px-4 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+            className="inline-flex h-10 items-center rounded-full bg-emerald-700 px-4 text-sm font-medium text-white transition-colors hover:bg-emerald-800"
           >
             {t("dashboard.importTransactions")}
           </Link>
@@ -169,7 +169,7 @@ export function DashboardClient({
       <div className="flex flex-wrap items-center gap-3">
         <Link
           href="/import"
-          className="inline-flex h-11 w-fit items-center rounded-full bg-emerald-600 px-5 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+          className="inline-flex h-11 w-fit items-center rounded-full bg-emerald-700 px-5 text-sm font-medium text-white transition-colors hover:bg-emerald-800"
         >
           {t("dashboard.importTransactions")}
         </Link>
@@ -281,7 +281,7 @@ function CashInput({
           </button>
         </div>
       </label>
-      <p className="text-xs text-zinc-400 dark:text-zinc-500">
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
         {status === "saved" ? t("dashboard.cashSaved") : t("dashboard.cashAvailableHint")}
       </p>
     </section>

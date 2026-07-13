@@ -23,7 +23,7 @@ export default function Home() {
         <div className="flex flex-wrap items-center gap-4">
           <Link
             href="/import"
-            className="flex h-12 items-center justify-center rounded-full bg-emerald-600 px-6 text-base font-medium text-white transition-colors hover:bg-emerald-700"
+            className="flex h-12 items-center justify-center rounded-full bg-emerald-700 px-6 text-base font-medium text-white transition-colors hover:bg-emerald-800"
           >
             {t("landing.ctaImport")}
           </Link>
