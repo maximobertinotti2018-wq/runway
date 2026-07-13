@@ -118,6 +118,31 @@ Edge Functions via [`.github/workflows/supabase-deploy.yml`](.github/workflows/s
 — no manual SQL Editor or dashboard-editor step. The Next.js app deploys to
 Vercel on push to `master`.
 
+### Email delivery (auth emails)
+
+Password reset / signup confirmation emails go out through a custom SMTP
+provider (Resend) configured in the Supabase dashboard
+(Authentication → Emails) — Supabase's built-in email service is
+testing-only: no template editing and a very low send rate. The Reset
+Password template was customized to link directly to `/auth/confirm` with
+a `token_hash` (`{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password`)
+rather than the default `{{ .ConfirmationURL }}` — this app's actual auth
+flow is PKCE (confirmed via Supabase's Auth logs showing
+`/auth/v1/verify?token=pkce_...`), and `/auth/confirm` handles both a PKCE
+`code` and a `token_hash`, but the token_hash path is the one that's
+resilient to a recovery link being opened in a different browser
+context/tab than the one that requested it.
+
+**Known limitation**: the Resend account isn't verified against a custom
+domain yet, so it's running in sandbox mode — auth emails only deliver to
+the Resend account owner's own address. Any other user signing up or
+resetting their password on the live deployment won't receive email until
+a domain is added and verified at
+[resend.com/domains](https://resend.com/domains) and the SMTP sender
+address in Supabase is switched from `onboarding@resend.dev` to an address
+on that domain. Deferred for now — not a code issue, just an infra step
+that needs an owned domain.
+
 ## Testing
 
 Four layers, each covering what the others can't:
