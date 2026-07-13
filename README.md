@@ -117,10 +117,11 @@ Four layers, each covering what the others can't:
 |-------|---------|--------|
 | Unit tests (Vitest) | `npm test` | Pure logic: CSV parsing, merchant normalization, runway/burn-rate math, subscription detection, i18n interpolation, **the categorization alias eval** |
 | E2E (Playwright) | `npm run test:e2e` | Landing, theme/language persistence, CSV import → preview, login/forgot-password shells — everything reachable without a live Supabase session |
-| Local DB verification | `bash scripts/db_verify.sh` | Migrations, RLS cross-tenant isolation, `nearest_category`/`nearest_category_match` SQL functions, dedupe constraint — against a throwaway Postgres 16 + `pgvector` cluster, no Docker |
-| CI | on every push/PR | Lint + typecheck + unit tests + build (`ci.yml`), then the full E2E suite in a second job |
+| Accessibility (axe-core) | part of `test:e2e`, `e2e/a11y.spec.ts` | WCAG 2.0/2.1 A+AA scan of every E2E page, light **and** dark mode (10 checks) |
+| Local DB verification | `bash scripts/db_verify.sh` | Migrations, RLS cross-tenant isolation, `nearest_category`/`nearest_category_match` SQL functions, dedupe constraint, `delete_own_account` cascade — against a throwaway Postgres 16 + `pgvector` cluster, no Docker |
+| CI | on every push/PR | Lint + typecheck + unit tests + build (`ci.yml`), then the full E2E suite (incl. a11y) in a second job |
 
-All four run offline, with no live Supabase project required — a deliberate
+All layers run offline, with no live Supabase project required — a deliberate
 constraint carried over from building this in a network-sandboxed environment,
 which turned into a genuine strength: the whole suite runs in CI without
 secrets beyond what's already there.
@@ -148,6 +149,18 @@ covers that layer's SQL-side distance ranking in isolation instead. To check
 the full hybrid pipeline end-to-end, sign in on the deployed app, import
 transactions for merchants *not* in `MERCHANT_ALIASES`, run Categorize, and
 inspect the results by hand.
+
+### Accessibility
+
+`e2e/a11y.spec.ts` runs axe-core against every E2E-covered page in light and
+dark mode. The first real run caught two genuine issues, both fixed: every
+`bg-emerald-600` CTA button (white text on it) measured 3.65:1 contrast
+against the WCAG AA minimum of 4.5:1, and the small `text-zinc-400` caption
+text measured 2.62:1 — darkened to emerald-700/zinc-500 respectively. It also
+caught a `<select>` on the dashboard (the per-subscription category override)
+with no accessible name for screen readers, fixed with an `aria-label`.
+`/dashboard` itself needs a live session so it isn't in the automated suite —
+checked by hand with the same tool instead, 0 violations after the fix above.
 
 Expected `db_verify.sh` tail:
 
