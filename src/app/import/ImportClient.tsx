@@ -10,6 +10,7 @@ import {
   type RawTransaction,
 } from "@/lib/csv/parse";
 import { normalizeMerchant } from "@/lib/merchants/normalize";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { saveImport, type SaveImportResult } from "./actions";
 
 type Stage = "idle" | "mapping" | "preview";
@@ -18,6 +19,7 @@ type SaveState = { status: "idle" } | { status: "saving" } | { status: "done"; r
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 export function ImportClient() {
+  const { t } = useLanguage();
   const [fileName, setFileName] = useState<string | null>(null);
   const [rawText, setRawText] = useState("");
   const [headers, setHeaders] = useState<string[]>([]);
@@ -85,7 +87,20 @@ export function ImportClient() {
   const total = useMemo(() => rows.reduce((s, r) => s + Math.abs(r.amount), 0), [rows]);
 
   return (
-    <div className="w-full max-w-3xl space-y-6">
+    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-8 px-6 py-16">
+      <header className="space-y-2">
+        <Link
+          href="/"
+          className="text-sm text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+        >
+          {t("common.backToHome")}
+        </Link>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+          {t("import.title")}
+        </h1>
+        <p className="text-zinc-600 dark:text-zinc-400">{t("import.description")}</p>
+      </header>
+
       {stage === "idle" && <Dropzone onFile={onFile} onSample={loadSample} />}
 
       {stage === "mapping" && mapping && (
@@ -104,7 +119,7 @@ export function ImportClient() {
             <div>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">{fileName}</p>
               <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                {rows.length} transactions · {money.format(total)} total spend
+                {t("import.summary", { count: rows.length, total: money.format(total) })}
               </p>
             </div>
             <div className="flex gap-3">
@@ -112,7 +127,7 @@ export function ImportClient() {
                 onClick={reset}
                 className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
               >
-                Import another file
+                {t("import.importAnother")}
               </button>
               {saveState.status !== "done" || !saveState.result.success ? (
                 <button
@@ -120,7 +135,7 @@ export function ImportClient() {
                   disabled={saveState.status === "saving"}
                   className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saveState.status === "saving" ? "Saving…" : "Save to Runway"}
+                  {saveState.status === "saving" ? t("import.saving") : t("import.saveToRunway")}
                 </button>
               ) : null}
             </div>
@@ -128,10 +143,12 @@ export function ImportClient() {
 
           {saveState.status === "done" && saveState.result.success && (
             <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-200">
-              Saved {saveState.result.insertedCount} transactions across{" "}
-              {saveState.result.merchantCount} merchants.{" "}
+              {t("import.savedMessage", {
+                count: saveState.result.insertedCount,
+                merchants: saveState.result.merchantCount,
+              })}{" "}
               <Link href="/dashboard" className="font-medium underline underline-offset-2">
-                Go to dashboard →
+                {t("import.goToDashboard")}
               </Link>
             </div>
           )}
@@ -140,12 +157,14 @@ export function ImportClient() {
               role="alert"
               className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800/50 dark:bg-red-950/40 dark:text-red-200"
             >
-              {saveState.result.error}
-              {saveState.result.error === "Sign in to save your import" && (
+              {saveState.result.error === "sign-in-required"
+                ? t("import.signInToSaveError")
+                : saveState.result.error}
+              {saveState.result.error === "sign-in-required" && (
                 <>
                   {" "}
                   <Link href="/login" className="font-medium underline underline-offset-2">
-                    Sign in →
+                    {t("import.signInLink")}
                   </Link>
                 </>
               )}
@@ -157,7 +176,7 @@ export function ImportClient() {
               role="alert"
               className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/40 dark:text-amber-200"
             >
-              {errors.length} row{errors.length > 1 ? "s" : ""} skipped:
+              {t("import.rowsSkipped", { count: errors.length })}
               <ul className="mt-1 list-inside list-disc">
                 {errors.slice(0, 5).map((e, i) => (
                   <li key={i}>{e}</li>
@@ -170,10 +189,10 @@ export function ImportClient() {
             <table className="w-full text-left text-sm">
               <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Date</th>
-                  <th className="px-4 py-3 font-medium">Description</th>
-                  <th className="px-4 py-3 font-medium">Merchant</th>
-                  <th className="px-4 py-3 text-right font-medium">Amount</th>
+                  <th className="px-4 py-3 font-medium">{t("import.colHeaderDate")}</th>
+                  <th className="px-4 py-3 font-medium">{t("import.colHeaderDescription")}</th>
+                  <th className="px-4 py-3 font-medium">{t("import.colHeaderMerchant")}</th>
+                  <th className="px-4 py-3 text-right font-medium">{t("import.colHeaderAmount")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -190,14 +209,10 @@ export function ImportClient() {
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
-            The <span className="font-medium">Merchant</span> column is the normalized key used
-            for embedding-based categorization — the same messy descriptor always collapses to one
-            cached merchant.
-          </p>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500">{t("import.merchantColumnNote")}</p>
         </section>
       )}
-    </div>
+    </main>
   );
 }
 
@@ -208,6 +223,7 @@ function Dropzone({
   onFile: (f: File) => void;
   onSample: () => void;
 }) {
+  const { t } = useLanguage();
   const [dragging, setDragging] = useState(false);
   return (
     <div className="space-y-3">
@@ -230,11 +246,9 @@ function Dropzone({
         }`}
       >
         <span className="text-base font-medium text-zinc-800 dark:text-zinc-100">
-          Drop a CSV here, or click to browse
+          {t("import.dropzoneTitle")}
         </span>
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">
-          Bank or card export with date, description and amount columns
-        </span>
+        <span className="text-sm text-zinc-500 dark:text-zinc-400">{t("import.dropzoneSubtitle")}</span>
         <input
           type="file"
           accept=".csv,text/csv"
@@ -250,7 +264,7 @@ function Dropzone({
           onClick={onSample}
           className="text-sm font-medium text-emerald-700 underline-offset-4 hover:underline dark:text-emerald-400"
         >
-          or try it with sample data
+          {t("import.trySample")}
         </button>
       </div>
     </div>
@@ -270,20 +284,19 @@ function ColumnMapper({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useLanguage();
   const fields: { key: keyof ColumnMapping; label: string }[] = [
-    { key: "date", label: "Date" },
-    { key: "description", label: "Description" },
-    { key: "amount", label: "Amount" },
+    { key: "date", label: t("import.colDate") },
+    { key: "description", label: t("import.colDescription") },
+    { key: "amount", label: t("import.colAmount") },
   ];
   return (
     <section className="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-800">
       <div>
         <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-          Map your columns
+          {t("import.mapColumnsTitle")}
         </h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          We couldn&apos;t detect the columns automatically — pick them below.
-        </p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">{t("import.mapColumnsDesc")}</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         {fields.map((f) => (
@@ -310,13 +323,13 @@ function ColumnMapper({
           onClick={onConfirm}
           className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
         >
-          Preview transactions
+          {t("import.previewTransactions")}
         </button>
         <button
           onClick={onCancel}
           className="rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
         >
-          Cancel
+          {t("import.cancel")}
         </button>
       </div>
     </section>

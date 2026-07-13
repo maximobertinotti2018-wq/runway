@@ -1,8 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { signout } from "../login/actions";
-import { CategorizeButton } from "./CategorizeButton";
+import { DashboardClient } from "./DashboardClient";
 
 export const metadata = { title: "Dashboard · Runway" };
 
@@ -15,39 +13,24 @@ export default async function DashboardPage() {
   // Belt-and-suspenders: middleware already guards this route.
   if (!user) redirect("/login");
 
+  const [{ data: profile }, { data: spendRows }] = await Promise.all([
+    supabase.from("profiles").select("cash_available, currency").eq("id", user.id).single(),
+    supabase
+      .from("monthly_spend_by_category")
+      .select("month, category_name, total")
+      .order("month", { ascending: true }),
+  ]);
+
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-8 px-6 py-16">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Dashboard
-        </h1>
-        <form action={signout}>
-          <button className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900">
-            Sign out
-          </button>
-        </form>
-      </header>
-
-      <p className="text-zinc-600 dark:text-zinc-400">
-        Signed in as <span className="font-medium text-zinc-900 dark:text-zinc-100">{user.email}</span>.
-      </p>
-
-      <Link
-        href="/import"
-        className="inline-flex h-11 w-fit items-center rounded-full bg-emerald-600 px-5 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
-      >
-        Import transactions →
-      </Link>
-
-      <section className="space-y-2 border-t border-zinc-200 pt-6 dark:border-zinc-800">
-        <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-          AI categorization
-        </h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Embeds any new merchants and matches them to a category by meaning.
-        </p>
-        <CategorizeButton />
-      </section>
-    </main>
+    <DashboardClient
+      email={user.email ?? ""}
+      cashAvailable={profile ? Number(profile.cash_available) : 0}
+      currency={profile?.currency ?? "USD"}
+      spendRows={(spendRows ?? []).map((r) => ({
+        month: r.month,
+        categoryName: r.category_name,
+        total: Number(r.total),
+      }))}
+    />
   );
 }

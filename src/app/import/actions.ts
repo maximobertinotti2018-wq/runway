@@ -21,7 +21,10 @@ export async function saveImport(fileName: string, rows: RawTransaction[]): Prom
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Sign in to save your import" };
+  // Stable key (not an English sentence) — the UI translates it; other
+  // error strings below are raw Postgres/Supabase messages, left untranslated
+  // since they're technical diagnostics, not user-facing copy.
+  if (!user) return { success: false, error: "sign-in-required" };
 
   const { data: importRow, error: importError } = await supabase
     .from("imports")

@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Dark mode is user-toggled (a `dark` class on <html>), not just OS
+   preference — ThemeProvider's inline script sets this class before paint,
+   so `dark:` utility classes everywhere in the app respond to the toggle. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,11 +17,9 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 body {

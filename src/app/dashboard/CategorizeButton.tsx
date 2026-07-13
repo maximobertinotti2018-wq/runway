@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 type State =
   | { status: "idle" }
@@ -34,6 +36,8 @@ async function describeFunctionError(error: unknown): Promise<string> {
 }
 
 export function CategorizeButton() {
+  const { t } = useLanguage();
+  const router = useRouter();
   const [state, setState] = useState<State>({ status: "idle" });
 
   const run = async () => {
@@ -52,6 +56,9 @@ export function CategorizeButton() {
       embeddedMerchants: data.embeddedMerchants,
       categorizedTransactions: data.categorizedTransactions,
     });
+    // The spend-by-category chart is fetched server-side; refresh so newly
+    // categorized transactions show up without a manual page reload.
+    router.refresh();
   };
 
   return (
@@ -61,13 +68,15 @@ export function CategorizeButton() {
         disabled={state.status === "running"}
         className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
       >
-        {state.status === "running" ? "Categorizing…" : "Categorize transactions"}
+        {state.status === "running" ? t("dashboard.categorizing") : t("dashboard.categorizeButton")}
       </button>
 
       {state.status === "done" && (
         <p className="text-sm text-emerald-700 dark:text-emerald-400">
-          Embedded {state.embeddedMerchants} new merchants, categorized{" "}
-          {state.categorizedTransactions} transactions.
+          {t("dashboard.categorizeSuccess", {
+            merchants: state.embeddedMerchants,
+            transactions: state.categorizedTransactions,
+          })}
         </p>
       )}
       {state.status === "error" && (

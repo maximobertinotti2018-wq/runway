@@ -34,8 +34,9 @@ export async function signup(formData: FormData) {
     revalidatePath("/", "layout");
     redirect("/dashboard");
   }
-  // Confirmation enabled → wait for the email link.
-  redirect("/login?message=Check your email to confirm your account.");
+  // Confirmation enabled → wait for the email link. A stable key (not the
+  // English sentence) so the login page can render it in either language.
+  redirect("/login?message=check-email");
 }
 
 export async function signInWithGoogle() {
