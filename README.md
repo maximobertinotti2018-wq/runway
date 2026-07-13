@@ -56,6 +56,14 @@ ambiguous without item-level receipt data.
 - **Embeddings are cached per merchant**, not per transaction, to keep AI cost near zero.
 - **Fixed category taxonomy** (not emergent clusters) so results are predictable.
 
+## Deployment
+
+Pushes to `master` touching `supabase/migrations/**` or `supabase/functions/**`
+automatically apply pending migrations (`supabase db push`) and redeploy both
+Edge Functions via [`.github/workflows/supabase-deploy.yml`](.github/workflows/supabase-deploy.yml)
+— no manual SQL Editor or dashboard-editor step. The Next.js app deploys to
+Vercel on push to `master`.
+
 ## Local database verification (no Docker required)
 
 Phase 1 migrations are tested against a throwaway Postgres 16 + `pgvector`
