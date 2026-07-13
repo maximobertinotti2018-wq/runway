@@ -17,22 +17,27 @@ type State =
  * returned lives in error.context (the raw Response). Without unwrapping it,
  * every failure looks identical and undiagnosable from the UI.
  */
-async function describeFunctionError(error: unknown): Promise<string> {
+async function parseFunctionError(
+  error: unknown,
+): Promise<{ message: string; retryAfterSeconds?: number }> {
   const context = (error as { context?: unknown }).context;
   if (context instanceof Response) {
     try {
       const body = await context.clone().json();
-      if (typeof body?.error === "string") return body.error;
+      if (body?.error === "rate_limited" && typeof body?.retryAfterSeconds === "number") {
+        return { message: "rate_limited", retryAfterSeconds: body.retryAfterSeconds };
+      }
+      if (typeof body?.error === "string") return { message: body.error };
     } catch {
       try {
         const text = await context.clone().text();
-        if (text) return text;
+        if (text) return { message: text };
       } catch {
         // fall through to the generic message below
       }
     }
   }
-  return error instanceof Error ? error.message : "Unknown error calling the Edge Function";
+  return { message: error instanceof Error ? error.message : "Unknown error calling the Edge Function" };
 }
 
 export function CategorizeButton() {
@@ -48,7 +53,12 @@ export function CategorizeButton() {
     // scoped to this user, same as every other client call in this app.
     const { data, error } = await supabase.functions.invoke("categorize");
     if (error) {
-      setState({ status: "error", message: await describeFunctionError(error) });
+      const parsed = await parseFunctionError(error);
+      const message =
+        parsed.message === "rate_limited" && typeof parsed.retryAfterSeconds === "number"
+          ? t("dashboard.categorizeRateLimited", { seconds: parsed.retryAfterSeconds })
+          : parsed.message;
+      setState({ status: "error", message });
       return;
     }
     setState({

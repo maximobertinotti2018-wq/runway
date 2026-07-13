@@ -1,10 +1,4 @@
--- Runway — combined Phase 1 schema for the Supabase SQL Editor.
--- Generated from supabase/migrations/*. Run once on a fresh project.
--- (For ongoing changes we use versioned migrations, not this file.)
-
--- ============================================================
--- supabase/migrations/20260712000001_init.sql
--- ============================================================
+-- 20260712000001_init.sql
 -- Runway — Phase 1: extensions, core schema, indexes
 -- Embeddings are 384-dim (gte-small via Supabase Edge Function).
 
@@ -148,9 +142,7 @@ create table public.subscriptions (
 );
 create index idx_subs_user on public.subscriptions(user_id);
 
--- ============================================================
--- supabase/migrations/20260712000002_rls.sql
--- ============================================================
+-- 20260712000002_rls.sql
 -- Runway — Phase 1: Row Level Security
 -- Every user-data table is owner-scoped via (select auth.uid()) = user_id.
 -- categories is system reference data: readable by all authenticated users,
@@ -207,9 +199,7 @@ grant select, insert, update, delete on
   public.subscriptions
   to authenticated;
 
--- ============================================================
--- supabase/migrations/20260712000003_views.sql
--- ============================================================
+-- 20260712000003_views.sql
 -- Runway — Phase 1: aggregation views
 -- IMPORTANT: security_invoker = true so the querying user's RLS on
 -- transactions applies. Materialized views are deliberately AVOIDED here —
@@ -230,9 +220,7 @@ group by t.user_id, date_trunc('month', t.occurred_on), t.category_id, c.name;
 
 grant select on public.monthly_spend_by_category to authenticated;
 
--- ============================================================
--- supabase/migrations/20260712000004_seed_categories.sql
--- ============================================================
+-- 20260712000004_seed_categories.sql
 -- Runway — Phase 1: seed the FIXED category taxonomy.
 -- Idempotent. Embeddings are backfilled later by the gte-small Edge Function.
 
@@ -258,9 +246,7 @@ insert into public.categories (slug, name) values
   ('uncategorized',        'Uncategorized')
 on conflict (slug) do nothing;
 
--- ============================================================
--- supabase/migrations/20260712000005_nearest_category.sql
--- ============================================================
+-- 20260712000005_nearest_category.sql
 -- Runway — Phase 4: nearest-category lookup by cosine distance.
 -- security_invoker (the default for functions) + categories' own RLS
 -- (readable by every authenticated user) means this never needs elevated
@@ -289,9 +275,7 @@ $$;
 revoke all on function public.nearest_category(vector) from public;
 grant execute on function public.nearest_category(vector) to authenticated, service_role;
 
--- ============================================================
--- supabase/migrations/20260712000006_nearest_category_match.sql
--- ============================================================
+-- 20260712000006_nearest_category_match.sql
 -- Runway — Phase 4 (iteration): nearest category WITH its distance, so the
 -- caller can apply a confidence threshold instead of always picking a
 -- category even when the best match is genuinely weak (e.g. an ambiguous
@@ -314,9 +298,7 @@ $$;
 revoke all on function public.nearest_category_match(vector) from public;
 grant execute on function public.nearest_category_match(vector) to authenticated, service_role;
 
--- ============================================================
--- supabase/migrations/20260713000001_ci_smoke_test.sql
--- ============================================================
+-- 20260713000001_ci_smoke_test.sql
 -- Runway — CI pipeline verification. No-op (comment only): this migration
 -- confirmed the GitHub Actions "Deploy Supabase" workflow applies new
 -- migrations automatically on push, after the one-time baseline repair.
@@ -325,9 +307,7 @@ grant execute on function public.nearest_category_match(vector) to authenticated
 -- one) so the recorded history matches what actually happened.
 select 1;
 
--- ============================================================
--- supabase/migrations/20260713000002_dedupe_transactions.sql
--- ============================================================
+-- 20260713000002_dedupe_transactions.sql
 -- Runway — prevent duplicate transactions from re-importing overlapping CSVs.
 -- Natural key: same user, same date, same raw description, same amount.
 -- A small, documented tradeoff: two genuinely separate purchases on the same
@@ -335,7 +315,29 @@ select 1;
 -- acceptable for an MVP given how much worse the prior behavior was (an
 -- unbounded duplicate every re-import).
 
+-- Clean up duplicates that already exist (this is exactly the bug being
+-- fixed here — production already has some from re-imports before this
+-- constraint existed). Keeps the earliest row per natural key.
+with ranked as (
+  select id,
+         row_number() over (
+           partition by user_id, occurred_on, raw_description, amount
+           order by created_at
+         ) as rn
+  from public.transactions
+)
+delete from public.transactions
+where id in (select id from ranked where rn > 1);
+
 alter table public.transactions
   add constraint transactions_user_date_desc_amount_key
   unique (user_id, occurred_on, raw_description, amount);
+
+-- 20260713000003_categorize_rate_limit.sql
+-- Runway — rate limit the categorize Edge Function per user.
+-- Re-embedding bare merchants is cheap per call but unbounded if a user (or a
+-- client bug) calls the function in a tight loop; the Edge Function reads
+-- this column to reject calls made too soon after the previous one.
+alter table public.profiles
+  add column last_categorize_at timestamptz;
 

@@ -90,6 +90,11 @@ function matchAlias(normalizedName: string): string | null {
   return null;
 }
 
+// Floor between two invocations for the same user — re-embedding bare
+// merchants is cheap per call but unbounded if called in a tight loop (button
+// mashing, or a client bug retrying on every render).
+const RATE_LIMIT_SECONDS = 30;
+
 // A match with cosine distance above this is too weak to trust — better to
 // leave a transaction unassigned than confidently mislabel an ambiguous
 // merchant (e.g. a generic "AMZN MKTP US" purchase — genuinely ambiguous
@@ -131,6 +136,21 @@ Deno.serve(async (req: Request) => {
       error: userErr,
     } = await userClient.auth.getUser();
     if (userErr || !user) return json({ error: "Not authenticated" }, 401);
+
+    const { data: profile, error: profileErr } = await userClient
+      .from("profiles")
+      .select("last_categorize_at")
+      .eq("id", user.id)
+      .single();
+    if (profileErr) return json({ error: `profile: ${profileErr.message}` }, 500);
+
+    if (profile?.last_categorize_at) {
+      const elapsedSeconds = (Date.now() - new Date(profile.last_categorize_at).getTime()) / 1000;
+      if (elapsedSeconds < RATE_LIMIT_SECONDS) {
+        const retryAfterSeconds = Math.ceil(RATE_LIMIT_SECONDS - elapsedSeconds);
+        return json({ error: "rate_limited", retryAfterSeconds }, 429);
+      }
+    }
 
     // 1. Embed this user's not-yet-embedded merchants (the per-merchant cache —
     //    each merchant is embedded once here, reused by every transaction).
@@ -213,6 +233,14 @@ Deno.serve(async (req: Request) => {
       if (error) return json({ error: `apply match: ${error.message}` }, 500);
       categorizedCount += count ?? 0;
     }
+
+    // Stamp the attempt regardless of how much work it actually did — a
+    // no-op call (nothing new to categorize) still counts against the floor,
+    // otherwise a tight loop with nothing to do would bypass it entirely.
+    await userClient
+      .from("profiles")
+      .update({ last_categorize_at: new Date().toISOString() })
+      .eq("id", user.id);
 
     return json({
       embeddedMerchants: bareMerchants?.length ?? 0,
