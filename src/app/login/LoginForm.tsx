@@ -53,9 +53,17 @@ export function LoginForm() {
           />
         </label>
         <label className="block text-sm">
-          <span className="mb-1 block font-medium text-zinc-700 dark:text-zinc-300">
-            {t("login.password")}
-          </span>
+          <div className="mb-1 flex items-center justify-between">
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+              {t("login.password")}
+            </span>
+            <Link
+              href="/forgot-password"
+              className="text-xs font-medium text-emerald-700 underline-offset-4 hover:underline dark:text-emerald-400"
+            >
+              {t("login.forgotPassword")}
+            </Link>
+          </div>
           <input
             type="password"
             name="password"

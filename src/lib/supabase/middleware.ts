@@ -32,7 +32,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protect app routes: unauthenticated users are sent to /login.
-  const protectedPaths = ["/dashboard"];
+  const protectedPaths = ["/dashboard", "/reset-password"];
   const path = request.nextUrl.pathname;
   if (!user && protectedPaths.some((p) => path.startsWith(p))) {
     const url = request.nextUrl.clone();
