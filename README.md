@@ -5,9 +5,21 @@
 
 **Expense & subscription intelligence for indie founders and freelancers.**
 
+**[→ Live demo](https://runway-blond.vercel.app)** — sign up or use "try it
+with sample data" on the import page, no account needed for that part.
+
 Import your transactions (CSV), and Runway categorizes them by meaning using
 embeddings, detects zombie/duplicate subscriptions, flags stealth price hikes,
 and projects your runway — how many months of cash you have left.
+
+<p>
+  <img src="docs/screenshots/landing.png" alt="Runway landing page" width="49%" />
+  <img src="docs/screenshots/dashboard.png" alt="Runway dashboard — burn rate, runway, spend by category, subscriptions" width="49%" />
+</p>
+<p>
+  <img src="docs/screenshots/import.png" alt="CSV import preview with normalized merchants" width="49%" />
+  <img src="docs/screenshots/landing-dark.png" alt="Landing page in dark mode" width="49%" />
+</p>
 
 ## Stack
 
@@ -50,6 +62,12 @@ demo glosses over:
   the UI), so a bug or button-mashing can't hammer it in a loop.
 - **Delete an import** — `/import` lists past imports with a delete action
   that removes the import and its transactions (RLS-scoped, confirm-before-delete).
+- **Manual transaction entry** — an "Add transaction" form on `/dashboard` for
+  spend that never comes through a CSV (cash, transfers), reusing the same
+  normalize/dedupe path as import.
+- **Self-service account deletion** — a `SECURITY DEFINER` RPC hardened like
+  `handle_new_user()` deletes the caller's own `auth.users` row; every user
+  table cascades from there.
 - **Automated E2E suite + CI** — see [Testing](#testing).
 - **Categorization eval harness** — the "7/8 on a manual check" claim from
   Phase 4 is now a repeatable, expanded, automated test — see
