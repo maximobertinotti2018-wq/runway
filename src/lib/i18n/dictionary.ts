@@ -96,6 +96,7 @@ export const dictionary = {
       emptyStateDesc:
         "Upload a CSV from your bank or card to see your burn rate, runway, and spend by category.",
       importTransactions: "Import transactions →",
+      exportCsv: "Export CSV",
       aiCategorizationTitle: "AI categorization",
       aiCategorizationDesc: "Embeds any new merchants and matches them to a category by meaning.",
       categorizeButton: "Categorize transactions",
@@ -243,6 +244,7 @@ export const dictionary = {
       emptyStateDesc:
         "Subí un CSV de tu banco o tarjeta para ver tu burn rate, runway y gasto por categoría.",
       importTransactions: "Importar transacciones →",
+      exportCsv: "Exportar CSV",
       aiCategorizationTitle: "Categorización con IA",
       aiCategorizationDesc: "Embebe los comercios nuevos y los matchea a una categoría por significado.",
       categorizeButton: "Categorizar transacciones",
