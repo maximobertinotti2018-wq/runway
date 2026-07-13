@@ -88,6 +88,7 @@ export const dictionary = {
       delete: "Delete",
       deleting: "Deleting…",
       deleteConfirm: "Delete this import and its transactions? This can't be undone.",
+      deleteConfirmButton: "Yes, delete",
     },
     dashboard: {
       title: "Dashboard",
@@ -147,6 +148,7 @@ export const dictionary = {
       deleteAccountButton: "Delete my account",
       deleteAccountDeleting: "Deleting…",
       deleteAccountConfirm: "Delete your account and all your data? This can't be undone.",
+      deleteAccountConfirmButton: "Yes, delete my account",
       accountEmailTitle: "Account email",
       changeEmailButton: "Change email",
       changeEmailNew: "New email",
@@ -243,6 +245,7 @@ export const dictionary = {
       delete: "Eliminar",
       deleting: "Eliminando…",
       deleteConfirm: "¿Eliminar esta importación y sus transacciones? No se puede deshacer.",
+      deleteConfirmButton: "Sí, eliminar",
     },
     dashboard: {
       title: "Panel",
@@ -302,6 +305,7 @@ export const dictionary = {
       deleteAccountButton: "Eliminar mi cuenta",
       deleteAccountDeleting: "Eliminando…",
       deleteAccountConfirm: "¿Eliminar tu cuenta y todos tus datos? No se puede deshacer.",
+      deleteAccountConfirmButton: "Sí, eliminar mi cuenta",
       accountEmailTitle: "Email de la cuenta",
       changeEmailButton: "Cambiar email",
       changeEmailNew: "Nuevo email",
