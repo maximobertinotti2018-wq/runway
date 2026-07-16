@@ -5,12 +5,21 @@
 
 **Expense & subscription intelligence for indie founders and freelancers.**
 
-**[→ Live demo](https://runway-blond.vercel.app)** — sign up or use "try it
-with sample data" on the import page, no account needed for that part.
+**[→ Live demo](https://runway-blond.vercel.app)** — sign up (no email
+confirmation required) and, on the import page, click "try it with sample
+data" to load a realistic 3-month/46-transaction CSV instead of hunting for
+your own bank export.
 
 Import your transactions (CSV), and Runway categorizes them by meaning using
 embeddings, detects zombie/duplicate subscriptions, flags stealth price hikes,
-and projects your runway — how many months of cash you have left.
+and projects your runway — how many months of cash you have left. The sample
+data is built to actually show that off, not just prove the importer parses a
+CSV: it has a Netflix charge that jumps from $15.99 to $19.99 in month three
+(a caught price hike), a $42/mo gym membership nobody's using (a zombie
+subscription), a weekly coffee subscription (cadence detection isn't just
+"monthly"), and enough day-to-day spending (Uber Eats, groceries, Amazon) for
+the categorization and burn-rate/runway numbers to look like a real budget
+instead of a toy example.
 
 <p>
   <img src="docs/screenshots/landing.png" alt="Runway landing page" width="49%" />
