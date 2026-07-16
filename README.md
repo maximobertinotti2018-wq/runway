@@ -14,7 +14,7 @@ Import your transactions (CSV), and Runway categorizes them by meaning using
 embeddings, detects zombie/duplicate subscriptions, flags stealth price hikes,
 and projects your runway — how many months of cash you have left. The sample
 data is built to actually show that off, not just prove the importer parses a
-CSV: it has a Netflix charge that jumps from $15.99 to $19.99 in month three
+CSV: it has a Netflix charge that jumps from $15.49 to $17.99 in month three
 (a caught price hike), a $42/mo gym membership nobody's using (a zombie
 subscription), a weekly coffee subscription (cadence detection isn't just
 "monthly"), and enough day-to-day spending (Uber Eats, groceries, Amazon) for
