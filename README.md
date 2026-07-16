@@ -77,6 +77,13 @@ demo glosses over:
 - **Self-service account deletion** — a `SECURITY DEFINER` RPC hardened like
   `handle_new_user()` deletes the caller's own `auth.users` row; every user
   table cascades from there.
+- **Data portability** — `/dashboard/export` downloads a full-history CSV of
+  every transaction (not just the dashboard's recent window). `/dashboard/export-summary`
+  downloads a generated PDF of the computed numbers instead — burn rate,
+  runway, spend by category, detected subscriptions with their price-hike
+  flag — by running the same pure functions the dashboard renders on screen
+  (via a shared `getDashboardData` query) through `pdfkit`, so the PDF can
+  never drift from what's on screen. Not a screenshot.
 - **Automated E2E suite + CI** — see [Testing](#testing).
 - **Categorization eval harness** — the "7/8 on a manual check" claim from
   Phase 4 is now a repeatable, expanded, automated test — see
