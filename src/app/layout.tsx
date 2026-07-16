@@ -15,9 +15,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = "https://runway-blond.vercel.app";
+const description = "Expense & subscription intelligence for indie founders.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Runway",
-  description: "Expense & subscription intelligence for indie founders.",
+  description,
+  openGraph: {
+    title: "Runway",
+    description,
+    url: siteUrl,
+    siteName: "Runway",
+    images: [{ url: "/og-image.png", width: 2560, height: 1600 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Runway",
+    description,
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
